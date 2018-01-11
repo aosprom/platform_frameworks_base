@@ -194,6 +194,7 @@ import com.android.systemui.colorextraction.SysuiColorExtractor;
 import com.android.systemui.doze.DozeHost;
 import com.android.systemui.doze.DozeLog;
 import com.android.systemui.doze.DozeReceiver;
+import com.android.systemui.doze.ShakeSensorManager;
 import com.android.systemui.fragments.ExtensionFragmentListener;
 import com.android.systemui.fragments.FragmentHostManager;
 import com.android.systemui.keyguard.KeyguardViewMediator;
@@ -295,7 +296,7 @@ public class StatusBar extends SystemUI implements DemoMode,
         ActivatableNotificationView.OnActivatedListener,
         ExpandableNotificationRow.ExpansionLogger, NotificationData.Environment,
         ExpandableNotificationRow.OnExpandClickListener, InflationCallback,
-        ColorExtractor.OnColorsChangedListener, ConfigurationListener, PackageChangedListener {
+        ColorExtractor.OnColorsChangedListener, ConfigurationListener, PackageChangedListener, ShakeSensorManager.ShakeListener {
     public static final boolean MULTIUSER_DEBUG = false;
 
     public static final boolean ENABLE_REMOTE_INPUT =
@@ -464,6 +465,10 @@ public class StatusBar extends SystemUI implements DemoMode,
     Object mQueueLock = new Object();
 
     protected StatusBarIconController mIconController;
+
+    private ShakeSensorManager mShakeSensorManager;
+    private Boolean enableShakeCleanByUser;
+    private Boolean enableShakeClean;
 
     // viewgroup containing the normal contents of the statusbar
     LinearLayout mStatusBarContent;
@@ -1135,6 +1140,24 @@ public class StatusBar extends SystemUI implements DemoMode,
     protected void createIconController() {
     }
 
+    @Override
+    public synchronized void onShake() {
+        clearAllNotifications();
+    }
+
+    public void enableShake(boolean enableShakeClean) {
+        ContentResolver resolver = mContext.getContentResolver();
+        if (mShakeSensorManager == null)
+            return;
+        boolean enableShakeCleanByUser = Settings.System.getInt(resolver,
+                Settings.System.SHAKE_CLEAN_NOTIFICATION, 1) == 1;
+        if (enableShakeClean && enableShakeCleanByUser && mDeviceInteractive) {
+            mShakeSensorManager.enable(20);
+        } else {
+            mShakeSensorManager.disable();
+        }
+    }
+
     // ================================================================================
     // Constructing the view
     // ================================================================================
@@ -1155,6 +1178,7 @@ public class StatusBar extends SystemUI implements DemoMode,
 
         // TODO: Deal with the ugliness that comes from having some of the statusbar broken out
         // into fragments, but the rest here, it leaves some awkward lifecycle and whatnot.
+        mShakeSensorManager = new ShakeSensorManager(mContext, this);
         mNotificationPanel = (NotificationPanelView) mStatusBarWindow.findViewById(
                 R.id.notification_panel);
         mStackScroller = (NotificationStackScrollLayout) mStatusBarWindow.findViewById(
@@ -3272,6 +3296,7 @@ public class StatusBar extends SystemUI implements DemoMode,
         }
 
         mExpandedVisible = true;
+        enableShake(true);
 
         // Expand the window to encompass the full screen in anticipation of the drag.
         // This is only possible to do atomically because the status bar is at the top of the screen!
@@ -3425,6 +3450,7 @@ public class StatusBar extends SystemUI implements DemoMode,
 
         mExpandedVisible = false;
         visibilityChanged(false);
+        enableShake(false);
 
         // Shrink the window to the size of the status bar only
         mStatusBarWindowManager.setPanelVisible(false);
@@ -6412,6 +6438,9 @@ public class StatusBar extends SystemUI implements DemoMode,
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.DOUBLE_TAP_SLEEP_LOCKSCREEN),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.SHAKE_CLEAN_NOTIFICATION),
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.DOUBLE_TAP_SLEEP_GESTURE),
