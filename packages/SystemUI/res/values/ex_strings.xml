@@ -110,7 +110,6 @@
     <!-- Screenrecord notification action: Stop -->
     <string name="screenrecord_notif_stop">Stop</string>
     <string name="screenrecord_notif_completed">Screen recorded successfully</string>
-    <string name="screenrecord_notif_duration">Total:</string>
     <!-- Screenrecord notification action: show/hide pointer -->
     <string name="screenrecord_notif_pointer_on">Show pointer</string>
     <string name="screenrecord_notif_pointer_off">Hide pointer</string>
@@ -189,4 +188,8 @@
 
     <!-- QS customizer -->
     <string name="drag_or_tap_to_add_tiles">Drag or tap to add tiles</string>
+
+    <!-- AEX logo -->
+    <string name="aex_logo_title">AEX logo</string>
+    <string name="aex_logo_summary">Let everyone know that you\'re using AEX when they see your screen</string>
 </resources>
