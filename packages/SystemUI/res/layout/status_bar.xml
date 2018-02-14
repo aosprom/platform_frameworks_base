@@ -67,6 +67,16 @@
             android:visibility="gone"
             android:singleLine="true"/>
 
+        <com.android.systemui.statusbar.policy.ClockLeft
+            android:id="@+id/left_clock"
+            android:textAppearance="@style/TextAppearance.StatusBar.Clock"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:singleLine="true"
+            android:paddingEnd="@dimen/status_bar_left_clock_end_padding"
+            android:gravity="center"
+            android:visibility="gone" />
+
         <!-- The alpha of this area is controlled from both PhoneStatusBarTransitions and
              PhoneStatusBar (DISABLE_NOTIFICATION_ICONS). -->
         <com.android.systemui.statusbar.AlphaOptimizedFrameLayout
@@ -107,25 +117,6 @@
                 />
         </com.android.keyguard.AlphaOptimizedLinearLayout>
     </LinearLayout>
-
-    <com.android.keyguard.AlphaOptimizedLinearLayout
-        android:id="@+id/center_clock_layout"
-        android:gravity="center"
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        >
-
-        <com.android.systemui.statusbar.policy.ClockCenter
-            android:id="@+id/center_clock"
-            android:textAppearance="@style/TextAppearance.StatusBar.Clock"
-            android:gravity="center"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:visibility="gone"
-            android:singleLine="true"
-            />
-    </com.android.keyguard.AlphaOptimizedLinearLayout>
 
     <ViewStub
         android:id="@+id/emergency_cryptkeeper_text"

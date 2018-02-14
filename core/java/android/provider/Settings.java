@@ -4599,7 +4599,18 @@ public final class Settings {
          */
         public static final String NOTIFICATION_SOUND_VIB_SCREEN_ON = "notification_sound_vib_screen_on";
 
-         /**
+        /**
+         * @hide
+         */
+        public static final String SCREENRECORD_QUALITY_MODE = "screenrecord_quality_mode";
+
+        /**
+         * Whether to display our du logo in the statusbar for extra swag
+         * @hide
+         */
+        public static final String STATUS_BAR_LOGO = "status_bar_logo";
+
+        /**
          * Show or hide clock
          * 0 - hide
          * 1 - show (default)
@@ -4679,17 +4690,6 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_CLOCK_DATE_FORMAT = "statusbar_clock_date_format";
-
-        /**
-         * @hide
-         */
-        public static final String SCREENRECORD_QUALITY_MODE = "screenrecord_quality_mode";
-
-        /**
-         * Whether to display our du logo in the statusbar for extra swag
-         * @hide
-         */
-        public static final String STATUS_BAR_LOGO = "status_bar_logo";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -4892,6 +4892,7 @@ public final class Settings {
             PRIVATE_SETTINGS.add(PROXIMITY_AUTO_SPEAKER_INCALL_ONLY);
             PRIVATE_SETTINGS.add(QS_TILE_TITLE_VISIBILITY);
             PRIVATE_SETTINGS.add(SYSTEM_THEME_STYLE);
+            PRIVATE_SETTINGS.add(STATUS_BAR_LOGO);
             PRIVATE_SETTINGS.add(STATUS_BAR_CLOCK);
             PRIVATE_SETTINGS.add(STATUSBAR_CLOCK_STYLE);
             PRIVATE_SETTINGS.add(STATUS_BAR_CLOCK_SECONDS);
@@ -4899,7 +4900,6 @@ public final class Settings {
             PRIVATE_SETTINGS.add(STATUSBAR_CLOCK_DATE_DISPLAY);
             PRIVATE_SETTINGS.add(STATUSBAR_CLOCK_DATE_STYLE);
             PRIVATE_SETTINGS.add(STATUSBAR_CLOCK_DATE_FORMAT);
-            PRIVATE_SETTINGS.add(STATUS_BAR_LOGO);
         }
 
         /**
