@@ -53,6 +53,8 @@ import com.android.systemui.statusbar.policy.UserInfoController;
 import com.android.systemui.util.wakelock.SettableWakeLock;
 import com.android.systemui.util.wakelock.WakeLock;
 
+import java.text.NumberFormat;
+
 /**
  * Controls the indications and error messages shown on the Keyguard
  */
@@ -92,6 +94,7 @@ public class KeyguardIndicationController {
     private int mChargingWattage;
     private int mTemperature;
     private String mMessageToShowOnScreenOn;
+    private int mLevel;
 
     private KeyguardUpdateMonitorCallback mUpdateMonitorCallback;
 
@@ -296,7 +299,12 @@ public class KeyguardIndicationController {
                     mTextView.setTextColor(Color.WHITE);
                     mTextView.switchIndication(mTransientIndication);
                 } else {
-                    mTextView.switchIndication(null);
+                    // Use the high voltage symbol ⚡ (u26A1 unicode) but prevent the system
+                    // to load its emoji colored variant with the uFE0E flag
+                    String bolt = "\u26A1\uFE0E";
+                    CharSequence chargeIndicator = (mPowerPluggedIn ? (bolt + " ") : "") +
+                            NumberFormat.getPercentInstance().format(mLevel / 100f);
+                    mTextView.switchIndication(chargeIndicator);
                 }
                 return;
             }
@@ -360,6 +368,11 @@ public class KeyguardIndicationController {
                 chargingId = hasChargingTime
                         ? R.string.keyguard_indication_dash_charging_time
                         : R.string.keyguard_plugged_in_dash_charging;
+                break;
+            case KeyguardUpdateMonitor.BatteryStatus.CHARGING_TURBO_POWER:
+                chargingId = hasChargingTime
+                        ? R.string.keyguard_indication_turbo_power_time
+                        : R.string.keyguard_plugged_in_turbo_power_charging;
                 break;
             case KeyguardUpdateMonitor.BatteryStatus.CHARGING_SLOWLY:
                 chargingId = hasChargingTime
@@ -457,6 +470,7 @@ public class KeyguardIndicationController {
             mChargingWattage = status.maxChargingWattage;
             mTemperature = status.temperature;
             mChargingSpeed = status.getChargingSpeed(mSlowThreshold, mFastThreshold);
+            mLevel  = status.level;
             updateIndication();
             if (mDozing) {
                 if (!wasPluggedIn && mPowerPluggedIn) {

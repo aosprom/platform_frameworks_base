@@ -90,6 +90,9 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
     public static final int CLOCK_DATE_STYLE_LOWERCASE = 1;
     public static final int CLOCK_DATE_STYLE_UPPERCASE = 2;
 
+    public static final int STYLE_DATE_LEFT = 0;
+    public static final int STYLE_DATE_RIGHT = 1;
+
     public static final int STYLE_CLOCK_RIGHT = 0;
     public static final int STYLE_CLOCK_LEFT = 1;
 
@@ -97,11 +100,14 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
     protected int mClockDateStyle = CLOCK_DATE_STYLE_REGULAR;
     protected int mClockStyle = STYLE_CLOCK_RIGHT;
     protected String mClockDateFormat = null;
-    protected boolean mShowClock;
+    protected int mClockDatePosition;
+    protected boolean mShowClock = true;
     private int mAmPmStyle;
     private final boolean mShowDark;
     private boolean mShowSeconds;
     private Handler mSecondsHandler;
+
+    private boolean mQuickStatusBarHeader;
 
     public Clock(Context context) {
         this(context, null);
@@ -123,6 +129,7 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
         } finally {
             a.recycle();
         }
+        updateSettings();
     }
 
     @Override
@@ -190,7 +197,8 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
                     if (!newLocale.equals(mLocale)) {
                         mLocale = newLocale;
                     }
-                    updateSettings();
+                    updateClockVisibility();
+                    updateStatus();
                     return;
                 });
             }
@@ -331,28 +339,53 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
 
         CharSequence dateString = null;
 
-        String result = is24 ? sdf.format(mCalendar.getTime()) : DateFormat.format(format, mCalendar.getTime()).toString();
+        String result = "";
+        String timeResult = is24 ? sdf.format(mCalendar.getTime()) : DateFormat.format(format, mCalendar.getTime()).toString();
+        String dateResult = "";
 
-        if (mClockDateDisplay != CLOCK_DATE_DISPLAY_GONE) {
+        if (mClockDateDisplay != CLOCK_DATE_DISPLAY_GONE && !mQuickStatusBarHeader) {
             Date now = new Date();
 
             if (mClockDateFormat == null || mClockDateFormat.isEmpty()) {
-                // Set dateString to short uppercase Weekday (Default for AOKP) if empty
-                dateString = DateFormat.format("EEEE", now) + " ";
+                // Set dateString to short uppercase Weekday if empty
+                dateString = DateFormat.format("EEEE", now);
             } else {
-                dateString = DateFormat.format(mClockDateFormat, now) + " ";
+                dateString = DateFormat.format(mClockDateFormat, now);
             }
             if (mClockDateStyle == CLOCK_DATE_STYLE_LOWERCASE) {
                 // When Date style is small, convert date to uppercase
-                result = dateString.toString().toLowerCase() + result;
+                dateResult = dateString.toString().toLowerCase();
             } else if (mClockDateStyle == CLOCK_DATE_STYLE_UPPERCASE) {
-                result = dateString.toString().toUpperCase() + result;
+                dateResult = dateString.toString().toUpperCase();
             } else {
-                result = dateString.toString() + result;
+                dateResult = dateString.toString();
             }
+            result = (mClockDatePosition == STYLE_DATE_LEFT) ? dateResult + " " + timeResult
+                    : timeResult + " " + dateResult;
+        } else {
+            // No date, just show time
+            result = timeResult;
         }
 
         SpannableStringBuilder formatted = new SpannableStringBuilder(result);
+
+        if (mClockDateDisplay != CLOCK_DATE_DISPLAY_NORMAL) {
+            if (dateString != null) {
+                int dateStringLen = dateString.length();
+                int timeStringOffset = (mClockDatePosition == STYLE_DATE_RIGHT)
+                        ? timeResult.length() + 1 : 0;
+                if (mClockDateDisplay == CLOCK_DATE_DISPLAY_GONE || mQuickStatusBarHeader) {
+                    formatted.delete(0, dateStringLen);
+                } else {
+                    if (mClockDateDisplay == CLOCK_DATE_DISPLAY_SMALL) {
+                        CharacterStyle style = new RelativeSizeSpan(0.7f);
+                        formatted.setSpan(style, timeStringOffset,
+                                timeStringOffset + dateStringLen,
+                                Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
+                    }
+                }
+            }
+        }
 
         if (mAmPmStyle != AM_PM_STYLE_NORMAL) {
             int magic1 = result.indexOf(MAGIC1);
@@ -368,20 +401,6 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
                     }
                     formatted.delete(magic2, magic2 + 1);
                     formatted.delete(magic1, magic1 + 1);
-                }
-            }
-        }
-        if (mClockDateDisplay != CLOCK_DATE_DISPLAY_NORMAL) {
-            if (dateString != null) {
-                int dateStringLen = dateString.length();
-                if (mClockDateDisplay == CLOCK_DATE_DISPLAY_GONE) {
-                    formatted.delete(0, dateStringLen);
-                } else {
-                    if (mClockDateDisplay == CLOCK_DATE_DISPLAY_SMALL) {
-                        CharacterStyle style = new RelativeSizeSpan(0.7f);
-                        formatted.setSpan(style, 0, dateStringLen,
-                                          Spannable.SPAN_EXCLUSIVE_INCLUSIVE);
-                    }
                 }
             }
         }
@@ -421,6 +440,10 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
 
         mClockDateFormat = Settings.System.getStringForUser(resolver,
                 Settings.System.STATUSBAR_CLOCK_DATE_FORMAT,
+                UserHandle.USER_CURRENT);
+
+        mClockDatePosition = Settings.System.getIntForUser(resolver,
+                Settings.System.STATUSBAR_CLOCK_DATE_POSITION, STYLE_DATE_LEFT,
                 UserHandle.USER_CURRENT);
 
         updateClockVisibility();
@@ -491,4 +514,8 @@ public class Clock extends TextView implements DemoMode, CommandQueue.Callbacks,
             mSecondsHandler.postAtTime(this, SystemClock.uptimeMillis() / 1000 * 1000 + 1000);
         }
     };
+
+    public void setIsQshb(boolean qshb) {
+        mQuickStatusBarHeader = qshb;
+    }
 }

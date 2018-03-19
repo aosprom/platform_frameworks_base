@@ -21,17 +21,67 @@
 -->
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
   <!-- Content description of the data connection type HSPA+ for accessibility (not shown on the screen). [CHAR LIMIT=NONE] -->
+  <string name="accessibility_data_connection_hspap">HSPA+</string>
+  <string name="global_action_restart_advanced">Avançat</string>
+  <string name="global_action_restart_recovery">Recovery</string>
+  <string name="global_action_restart_bootloader">Bootloader</string>
+  <string name="global_action_restart_ui">SystemUI</string>
+  <string name="global_action_restart_soft">Reinici ràpid</string>
+  <string name="global_action_screenrecord">Gravació de pantalla</string>
   <!-- Advance location quick setting tile -->
+  <string name="accessibility_quick_settings_location_battery_saving">Informes d\'ubicació: Mode d\'estalvi de bateria.</string>
+  <string name="accessibility_quick_settings_location_gps_only">Informes d\'ubicació: Mode només sensors.</string>
+  <string name="accessibility_quick_settings_location_high_accuracy">Informes d\'ubicació: Mode d\'alta precisió.</string>
   <!-- PiP Tile -->
+  <string name="quick_settings_pip_label">PiP</string>
+  <string name="quick_settings_pip_tile_app_na">App no admet PiP</string>
   <!-- Caffeine QS Tile -->
+  <string name="quick_settings_caffeine_label">Mode Cafeïna</string>
+  <string name="accessibility_quick_settings_caffeine_off">Cafeïna desactivada</string>
+  <string name="accessibility_quick_settings_caffeine_on">Cafeïna activada</string>
+  <string name="statusbar_items_title">Elements de la barra d\'estat</string>
   <!-- Screenshot QS tile -->
+  <string name="quick_settings_screenshot_label">Captura de pantalla</string>
+  <string name="quick_settings_region_screenshot_label">Captura de pantalla parcial</string>
+  <string name="recents_free_ram">RAM lliure: %1$d MB</string>
   <!-- volte icon switch -->
+  <string name="status_bar_volte">VOLTE</string>
   <!-- Compass QS Tile -->
+  <string name="quick_settings_compass_label">Brúixola</string>
+  <string name="quick_settings_compass_value"><xliff:g id="degrees">%1$.0f</xliff:g>\u00b0 <xliff:g id="direction">%2$s</xliff:g></string>
+  <string name="quick_settings_compass_init">Inicialitznt\u2026</string>
+  <string name="accessibility_quick_settings_compass_off">Brúixola deshabilitada.</string>
+  <string name="accessibility_quick_settings_compass_on">Brúixola habilitada.</string>
+  <string name="accessibility_quick_settings_compass_changed_off">La brúixola s\'ha deshabilitat.</string>
+  <string name="accessibility_quick_settings_compass_changed_on">La brúixola s\'ha habilitat.</string>
+  <string name="quick_settings_compass_N">N</string>
+  <string name="quick_settings_compass_NE">NE</string>
+  <string name="quick_settings_compass_E">E</string>
+  <string name="quick_settings_compass_SE">SE</string>
+  <string name="quick_settings_compass_S">S</string>
+  <string name="quick_settings_compass_SW">SO</string>
+  <string name="quick_settings_compass_W">O</string>
+  <string name="quick_settings_compass_NW">NO</string>
   <!-- Sound QS Tile -->
+  <string name="quick_settings_sound_label">So</string>
+  <string name="quick_settings_sound_ring">Timbre</string>
+  <string name="quick_settings_sound_vibrate">Vibració</string>
+  <string name="quick_settings_sound_dnd">No molestar</string>
+  <string name="lockscreen_default">Per defecte</string>
+  <string name="lockscreen_hidden">Cap</string>
   <!-- Shows when people have clicked on the custom lockscreen shortcut [CHAR LIMIT=60] -->
+  <string name="custom_hint">Llisca des de la icona per obrir</string>
   <!-- Heads Up QS Tile -->
+  <string name="quick_settings_heads_up_label">Notif. emergents</string>
+  <string name="accessibility_quick_settings_heads_up_off">Notif. emergents desact.</string>
+  <string name="accessibility_quick_settings_heads_up_on">Notif. emergents act.</string>
+  <string name="accessibility_quick_settings_heads_up_changed_off">Les notif. emergents s\'han desactivat.</string>
+  <string name="accessibility_quick_settings_heads_up_changed_on">Les notif. emergents s\'han activat.</string>
   <!-- Heads up snooze toast -->
+  <string name="heads_up_snooze_message_one_minute"><xliff:g id="string">%s </xliff:g> • notificació flotant posposada 1 minut.</string>
+  <string name="heads_up_snooze_message"><xliff:g id="string">%s </xliff:g> - notificacions flotants posposades <xliff:g id="number">%d </xliff:g> minuts.</string>
   <!-- Battery saver tile -->
+  <string name="battery_saver_qs_tile_fully_charged">Càrrega completa</string>
   <!-- Indication on the keyguard that is shown when the device is charging with a dash charger. Should match keyguard_plugged_in_dash_charging [CHAR LIMIT=40]-->
   <!-- Screenrecord Notification Ticker -->
   <!-- Screenrecord notification title -->
@@ -51,4 +101,14 @@
   <!-- Music tile -->
   <!-- Expanded Desktop QS Tile -->
   <!-- QS customizer -->
+  <!-- AEX logo -->
+  <!-- HW Keys Tile -->
+  <!-- Text to use when the number in a notification info is too large
+         (greater than status_bar_notification_info_maxnum, defined in
+         values/config.xml) and must be truncated.
+         [CHAR LIMIT=4] -->
+  <!-- Weather string format in expanded statusbar header -->
+  <!-- Navigation bar Tile -->
+  <!-- Kill button in notification guts -->
+  <!-- Indication on the keyguard that is shown when the device is charging with a turbo power charger. Should match keyguard_plugged_in_turbo_power_charging [CHAR LIMIT=40]-->
 </resources>

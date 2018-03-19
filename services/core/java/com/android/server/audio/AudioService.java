@@ -1421,7 +1421,7 @@ public class AudioService extends IAudioService.Stub
                 direction/*val1*/, flags/*val2*/, new StringBuilder(callingPackage)
                         .append("/").append(caller).append(" uid:").append(uid).toString()));
         final int streamType;
-        if (mUserSelectedVolumeControlStream && (mVolumeControlStream != -1)) { // implies mVolumeControlStream != -1
+        if (mUserSelectedVolumeControlStream) { // implies mVolumeControlStream != -1
             streamType = mVolumeControlStream;
         } else {
             final int maybeActiveStreamType = getActiveStreamType(suggestedStreamType);
@@ -5310,7 +5310,7 @@ public class AudioService extends IAudioService.Stub
                 }
             }
             mLaunchPlayer = Settings.System.getIntForUser(mContext.getContentResolver(),
-                    Settings.System.HEADSET_CONNECT_PLAYER, 4, UserHandle.USER_CURRENT);
+                    Settings.System.HEADSET_CONNECT_PLAYER, 0, UserHandle.USER_CURRENT);
         }
 
         private void updateEncodedSurroundOutput() {

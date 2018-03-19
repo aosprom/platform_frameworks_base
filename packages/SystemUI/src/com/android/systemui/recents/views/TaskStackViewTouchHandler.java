@@ -447,7 +447,8 @@ class TaskStackViewTouchHandler implements SwipeHelper.Callback {
     @Override
     public View getChildAtPosition(MotionEvent ev) {
         TaskView tv = findViewAtPoint((int) ev.getX(), (int) ev.getY());
-        if (tv != null && canChildBeDismissed(tv)) {
+        if (tv != null && (canChildBeDismissed(tv)
+                || Recents.sLockedTasks.contains(tv.getTask()))) {
             return tv;
         }
         return null;
@@ -659,10 +660,7 @@ class TaskStackViewTouchHandler implements SwipeHelper.Callback {
             }
 
             int taskIndex = mCurrentTasks.indexOf(task);
-            if (taskIndex == -1 || mCurrentTaskTransforms.size() == 0
-                    || mFinalTaskTransforms.size() == 0
-                    || taskIndex >= mCurrentTaskTransforms.size()
-                    || taskIndex >= mFinalTaskTransforms.size()) {
+            if (taskIndex == -1) {
                 // If a task was added to the stack view after the start of the dismiss gesture,
                 // just ignore it
                 continue;

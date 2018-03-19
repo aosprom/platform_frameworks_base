@@ -3,6 +3,7 @@
 LOCAL_REL_DIR := core/jni
 
 LOCAL_CFLAGS += -Wall -Werror -Wno-unused-parameter
+LOCAL_CFLAGS += -fno-strict-aliasing
 
 LOCAL_SRC_FILES += \
     $(LOCAL_REL_DIR)/BroadcastRadio/JavaRef.cpp \
@@ -108,6 +109,9 @@ LOCAL_SHARED_LIBRARIES += \
     android.hardware.vr@1.0 \
     android.frameworks.schedulerservice@1.0 \
     android.frameworks.sensorservice@1.0 \
+
+LOCAL_SHARED_LIBRARIES += \
+    vendor.lineage.power@1.0
 
 LOCAL_STATIC_LIBRARIES += \
     android.hardware.broadcastradio@1.1-utils-lib \

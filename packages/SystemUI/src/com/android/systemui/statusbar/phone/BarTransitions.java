@@ -180,7 +180,7 @@ public class BarTransitions {
                 mSemiTransparent = context.getColor(
                         com.android.internal.R.color.system_bar_background_semi_transparent);
                 mTransparent = context.getColor(R.color.system_bar_background_transparent);
-                mWarning = Utils.getColorAttr(context, android.R.attr.colorError);
+                mWarning = context.getColor(R.color.powersave_warning_color);
             }
             mGradient = context.getDrawable(gradientResourceId);
         }
