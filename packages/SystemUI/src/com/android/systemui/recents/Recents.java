@@ -59,8 +59,10 @@ import com.android.systemui.recents.events.component.SetWaitingForTransitionStar
 import com.android.systemui.recents.events.component.ShowUserToastEvent;
 import com.android.systemui.recents.events.ui.RecentsDrawnEvent;
 import com.android.systemui.recents.misc.SystemServicesProxy;
+import com.android.systemui.recents.misc.Utilities;
 import com.android.systemui.recents.model.RecentsTaskLoader;
 import com.android.systemui.recents.model.Task;
+import com.android.systemui.slimrecent.icons.IconsHandler;
 import com.android.systemui.stackdivider.Divider;
 import com.android.systemui.statusbar.CommandQueue;
 
@@ -115,6 +117,10 @@ public class Recents extends SystemUI
     private Handler mHandler;
     private RecentsImpl mImpl;
     private int mDraggingInRecentsCurrentUser;
+
+    private IconsHandler mIconsHandler;
+
+    private Configuration mConfiguration;
 
     // Only For system user, this is the callbacks instance we return to each secondary user
     private RecentsSystemUser mSystemToUserCallbacks;
@@ -210,12 +216,19 @@ public class Recents extends SystemUI
         getTaskLoader().evictAllCaches();
     }
 
+    public IconsHandler getIconsHandler() {
+        return mIconsHandler;
+    }
+
     @Override
     public void start() {
         sDebugFlags = new RecentsDebugFlags(mContext);
         sSystemServicesProxy = SystemServicesProxy.getInstance(mContext);
         sConfiguration = new RecentsConfiguration(mContext);
-        sTaskLoader = new RecentsTaskLoader(mContext);
+        mIconsHandler = new IconsHandler(
+                mContext, R.dimen.recents_task_view_header_height_tablet_land, 1.0f);
+        mConfiguration = new Configuration(Utilities.getAppConfiguration(mContext));
+        sTaskLoader = new RecentsTaskLoader(mContext, mIconsHandler);
         mHandler = new Handler();
         mImpl = new RecentsImpl(mContext);
 
@@ -589,6 +602,11 @@ public class Recents extends SystemUI
      */
     public void onConfigurationChanged(Configuration newConfig) {
         int currentUser = sSystemServicesProxy.getCurrentUser();
+        if (mConfiguration.densityDpi != newConfig.densityDpi) {
+            resetIconCache();
+            mIconsHandler.onDpiChanged(mContext);
+        }
+        mConfiguration.updateFrom(newConfig);
         if (sSystemServicesProxy.isSystemUser(currentUser)) {
             mImpl.onConfigurationChanged();
         } else {

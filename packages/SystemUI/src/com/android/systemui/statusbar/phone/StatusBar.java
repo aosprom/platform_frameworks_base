@@ -3211,6 +3211,20 @@ public class StatusBar extends SystemUI implements DemoMode,
         return themeInfo != null && themeInfo.isEnabled();
     }
 
+    public void unloadStockDarkTheme() {
+        OverlayInfo themeInfo = null;
+        try {
+            themeInfo = mOverlayManager.getOverlayInfo("com.android.systemui.theme.dark",
+                    mCurrentUserId);
+            if (themeInfo != null && themeInfo.isEnabled()) {
+                mOverlayManager.setEnabled("com.android.systemui.theme.dark",
+                        false /*disable*/, mCurrentUserId);
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Nullable
     public View getAmbientIndicationContainer() {
         return mAmbientIndicationContainer;
@@ -5333,6 +5347,9 @@ public class StatusBar extends SystemUI implements DemoMode,
                         useDarkTheme, mCurrentUserId);
                 mOverlayManager.setEnabled("com.android.dui.theme.dark",
                         useDarkTheme, mCurrentUserId);
+                if (useDarkTheme) {
+                    unloadStockDarkTheme();
+                }
             } catch (RemoteException e) {
                 Log.w(TAG, "Can't change theme", e);
             }
@@ -6777,8 +6794,8 @@ public class StatusBar extends SystemUI implements DemoMode,
         if (!slimRecents) {
             String currentIconPack = Settings.System.getStringForUser(mContext.getContentResolver(),
                 Settings.System.RECENTS_ICON_PACK, mCurrentUserId);
-            IconsHandler.getInstance(mContext).updatePrefs(currentIconPack);
             mRecents.resetIconCache();
+            mRecents.getIconsHandler().updatePrefs(currentIconPack);
         }
     }
 
@@ -6799,7 +6816,6 @@ public class StatusBar extends SystemUI implements DemoMode,
                 mSlimRecents = null;
             }
         }
-        IconsHandler.getInstance(mContext).resetIconNormalizer();
         updateRecentsIconPack();
     }
 
