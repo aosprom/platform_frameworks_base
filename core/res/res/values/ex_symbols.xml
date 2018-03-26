@@ -78,14 +78,6 @@
     <java-symbol type="anim" name="du_app_in" />
     <java-symbol type="anim" name="du_app_out" />
 
-    <!-- Hardware key binding -->
-    <java-symbol type="integer" name="config_deviceHardwareKeys" />
-
-  <java-symbol type="bool" name="config_deviceHasButtonBacklight" />
-
-  <java-symbol type="integer" name="config_buttonBrightnessSettingDefault" />
-  <java-symbol type="bool" name="config_deviceHasVariableButtonBrightness" />
-
   <java-symbol type="integer" name="config_flashlightProximityTimeout" />
 
   <java-symbol type="bool" name="config_canForceDozeNotifications" />
@@ -176,6 +168,13 @@
   <java-symbol type="anim" name="slide_out_right_no_fade" />
 
   <java-symbol type="color" name="updater_snackbar_text_color" />
+
+  <!-- Hardware key binding -->
+  <java-symbol type="integer" name="config_deviceHardwareKeys" />
+
+  <!-- Button brightness -->
+  <java-symbol type="bool" name="config_button_brightness_support" />
+  <java-symbol type="integer" name="config_button_brightness_default" />
 
 </resources>
 

@@ -26,6 +26,7 @@
 package com.android.server.policy;
 
 import static android.view.WindowManager.LayoutParams.PRIVATE_FLAG_KEYGUARD;
+import static android.view.WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG;
 
 import java.util.ArrayList;
 
@@ -83,10 +84,6 @@ public class HardkeyActionHandler {
     private HardKeyButton mRecentButton;
     private HardKeyButton mMenuButton;
     private HardKeyButton mAssistButton;
-
-    // Behavior of HOME button during incomming call ring.
-    // (See Settings.Secure.RING_HOME_BUTTON_BEHAVIOR.)
-//    int mRingHomeBehavior;
 
     private ActionReceiver mActionReceiver = new ActionReceiver() {
         @Override
@@ -209,20 +206,12 @@ public class HardkeyActionHandler {
 
             // If a system window has focus, then it doesn't make sense
             // right now to interact with applications.
-            //
-            // NOTE: I don't think this code block is reachable here anyways because
-            // we don't intercept any key events if keyguard is showing
-            // However, "WINDOW_TYPES_WHERE_HOME_DOESNT_WORK" is reachable
-            //
             WindowManager.LayoutParams attrs = win != null ? win.getAttrs() : null;
             if (attrs != null) {
                 final int type = attrs.type;
-                if (type == WindowManager.LayoutParams.TYPE_KEYGUARD_DIALOG
+                if (type == TYPE_KEYGUARD_DIALOG
                         || (attrs.privateFlags & PRIVATE_FLAG_KEYGUARD) != 0) {
                     // the "app" is keyguard, so give it the key
-                    // NOTE: if somehow we ever get here, send it back and let the event
-                    // pass through to AOSP handling. Which, in this case, does the same
-                    // thing we just did.
                     return false;
                 }
                 final int typeCount = WINDOW_TYPES_WHERE_HOME_DOESNT_WORK.length;
@@ -233,7 +222,6 @@ public class HardkeyActionHandler {
                     }
                 }
             }
-
 
             if (!down) {
                 return true;
@@ -662,13 +650,9 @@ public class HardkeyActionHandler {
                     Settings.Secure.getUriFor(ActionConstants.getDefaults(ActionConstants.HWKEYS)
                             .getUri()), false,
                     this, UserHandle.USER_ALL);
-//            resolver.registerContentObserver(Settings.System.getUriFor(
-//                    Settings.Secure.RING_HOME_BUTTON_BEHAVIOR), false, this,
-//                    UserHandle.USER_ALL);
             resolver.registerContentObserver(
                     Settings.Secure.getUriFor(Settings.Secure.HARDWARE_KEYS_DISABLE), false, this,
                     UserHandle.USER_ALL);
-
             updateKeyAssignments();
         }
 
@@ -679,9 +663,8 @@ public class HardkeyActionHandler {
     }
 
     private void updateKeyAssignments() {
-        ContentResolver cr = mContext.getContentResolver();
         synchronized (mLock) {
-            mHwKeysDisabled = Settings.Secure.getIntForUser(cr,
+            mHwKeysDisabled = Settings.Secure.getIntForUser(mContext.getContentResolver(),
                     Settings.Secure.HARDWARE_KEYS_DISABLE, 0,
                     UserHandle.USER_CURRENT) != 0;
 
@@ -728,11 +711,6 @@ public class HardkeyActionHandler {
             Message msg = mHandler.obtainMessage(MSG_UPDATE_MENU_KEY);
             msg.arg1 = hasMenuKeyEnabled ? 1 : 0;
             mHandler.sendMessage(msg);
-
-//            mRingHomeBehavior = Settings.Secure.getIntForUser(cr,
-//                    Settings.Secure.RING_HOME_BUTTON_BEHAVIOR,
-//                    Settings.Secure.RING_HOME_BUTTON_BEHAVIOR_DEFAULT,
-//                    UserHandle.USER_CURRENT);
         }
     }
 }

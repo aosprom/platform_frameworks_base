@@ -857,7 +857,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     private boolean mVolumeMusicControlActive;
     private boolean mVolumeMusicControl;
     private boolean mVolumeWakeActive;
-    private HardkeyActionHandler mKeyHandler;
 
     private int mTorchActionMode;
     private static final float PROXIMITY_DISTANCE_THRESHOLD = 5.0f;
@@ -901,6 +900,8 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
     private boolean mClearedBecauseOfForceShow;
     private boolean mTopWindowIsKeyguard;
+
+    private HardkeyActionHandler mKeyHandler;
 
     private boolean mHasPermanentMenuKey;
 
@@ -1003,6 +1004,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     mVolumeMusicControlActive = true;
                     break;
                 }
+                case MSG_TOGGLE_TORCH:
+                    toggleFlashLightProximityCheck();
+                    break;
+                case MSG_CLEAR_PROXIMITY:
+                    cleanupProximity();
+                    break;
                 case HardkeyActionHandler.MSG_FIRE_HOME:
                     launchHomeFromHotKey();
                     break;
@@ -1014,12 +1021,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 case HardkeyActionHandler.MSG_DO_HAPTIC_FB:
                     performHapticFeedbackLw(null,
                             HapticFeedbackConstants.LONG_PRESS, false);
-                    break;
-                case MSG_TOGGLE_TORCH:
-                    toggleFlashLightProximityCheck();
-                    break;
-                case MSG_CLEAR_PROXIMITY:
-                    cleanupProximity();
                     break;
             }
         }
@@ -6460,6 +6461,10 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         mContext.sendBroadcastAsUser(errorIntent, UserHandle.CURRENT);
     }
 
+    private boolean isHwKeysDisabled() {
+        return mKeyHandler != null ? mKeyHandler.isHwKeysDisabled() : false;
+    }
+
     // Assume this is called from the Handler thread.
     private void takeScreenrecord(final int mode) {
         synchronized (mScreenrecordLock) {
@@ -6516,10 +6521,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 mHandler.postDelayed(mScreenrecordTimeout, 32 * 60 * 1000);
             }
         }
-    }
-
-    private boolean isHwKeysDisabled() {
-        return mKeyHandler != null ? mKeyHandler.isHwKeysDisabled() : false;
     }
 
     /** {@inheritDoc} */
