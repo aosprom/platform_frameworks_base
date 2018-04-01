@@ -248,6 +248,7 @@ import com.android.systemui.statusbar.phone.TickerView;
 import com.android.systemui.statusbar.notification.InflationException;
 import com.android.systemui.statusbar.notification.RowInflaterTask;
 import com.android.systemui.statusbar.notification.VisualStabilityManager;
+import com.android.systemui.statusbar.phone.ThemeAccentUtils;
 import com.android.systemui.statusbar.phone.UnlockMethodCache.OnUnlockMethodChangedListener;
 import com.android.systemui.statusbar.policy.BatteryController;
 import com.android.systemui.statusbar.policy.BatteryController.BatteryStateChangeCallback;
@@ -1540,6 +1541,30 @@ public class StatusBar extends SystemUI implements DemoMode,
         mNotificationIconAreaController.onDensityOrFontScaleChanged(mContext);
 
         reevaluateStyles();
+    }
+
+    @Override
+    public void onOverlayChanged() {
+        reinflateViews();
+        updateNotificationsOnOverlayChanged();
+        mStackScroller.onOverlayChanged();
+        mNotificationShelf.onOverlayChanged();
+        mNotificationPanel.onOverlayChanged();
+        Dependency.get(DarkIconDispatcher.class).onOverlayChanged(mContext);
+    }
+
+    private void updateNotificationsOnOverlayChanged() {
+        ArrayList<Entry> activeNotifications = mNotificationData.getActiveNotifications();
+        for (int i = 0; i < activeNotifications.size(); i++) {
+            Entry entry = activeNotifications.get(i);
+            boolean exposedGuts = mNotificationGutsExposed != null
+                    && entry.row.getGuts() == mNotificationGutsExposed;
+            entry.row.onOverlayChanged();
+            if (exposedGuts) {
+                mNotificationGutsExposed = entry.row.getGuts();
+                bindGuts(entry.row, mGutsMenuItem);
+            }
+        }
     }
 
     private void reinflateViews() {
@@ -3178,51 +3203,27 @@ public class StatusBar extends SystemUI implements DemoMode,
         updateTheme();
     }
 
+    // Check for the dark system theme
     public boolean isUsingDarkTheme() {
-        OverlayInfo themeInfo = null;
-        try {
-            themeInfo = mOverlayManager.getOverlayInfo("com.android.system.theme.dark",
-                    mCurrentUserId);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        return themeInfo != null && themeInfo.isEnabled();
+        return ThemeAccentUtils.isUsingDarkTheme(mOverlayManager, mCurrentUserId);
     }
 
     public boolean isUsingBlackTheme() {
-        OverlayInfo themeInfo = null;
-        try {
-            themeInfo = mOverlayManager.getOverlayInfo("com.android.system.theme.black",
-                    mCurrentUserId);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        return themeInfo != null && themeInfo.isEnabled();
+        return ThemeAccentUtils.isUsingBlackTheme(mOverlayManager, mCurrentUserId);
     }
 
     public boolean isUsingExtendedTheme() {
-        OverlayInfo themeInfo = null;
-        try {
-            themeInfo = mOverlayManager.getOverlayInfo("com.android.system.theme.extended",
-                    mCurrentUserId);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
-        return themeInfo != null && themeInfo.isEnabled();
+        return ThemeAccentUtils.isUsingExtendedTheme(mOverlayManager, mCurrentUserId);
     }
 
+    // Unloads the stock dark theme
     public void unloadStockDarkTheme() {
-        OverlayInfo themeInfo = null;
-        try {
-            themeInfo = mOverlayManager.getOverlayInfo("com.android.systemui.theme.dark",
-                    mCurrentUserId);
-            if (themeInfo != null && themeInfo.isEnabled()) {
-                mOverlayManager.setEnabled("com.android.systemui.theme.dark",
-                        false /*disable*/, mCurrentUserId);
-            }
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        ThemeAccentUtils.unloadStockDarkTheme(mOverlayManager, mCurrentUserId);
+    }
+
+    // Check for black and white accent overlays
+    public void unfuckBlackWhiteAccent() {
+        ThemeAccentUtils.unfuckBlackWhiteAccent(mOverlayManager, mCurrentUserId);
     }
 
     @Nullable
@@ -5334,50 +5335,26 @@ public class StatusBar extends SystemUI implements DemoMode,
                     .getWallpaperColors(WallpaperManager.FLAG_SYSTEM);
             useDarkTheme = systemColors != null
                     && (systemColors.getColorHints() & WallpaperColors.HINT_SUPPORTS_DARK_THEME) != 0;
+            // Check for black and white accent so we don't end up
+            // with white on white or black on black
+            unfuckBlackWhiteAccent();
         } else {
             useDarkTheme = userThemeSetting == 2;
             useBlackTheme = userThemeSetting == 3;
             useExtendedTheme = userThemeSetting == 4;
+            // Check for black and white accent so we don't end up
+            // with white on white or black on black
+            unfuckBlackWhiteAccent();
         }
         if (isUsingDarkTheme() != useDarkTheme) {
-            try {
-                mOverlayManager.setEnabled("com.android.system.theme.dark",
-                        useDarkTheme, mCurrentUserId);
-                mOverlayManager.setEnabled("com.android.settings.theme.dark",
-                        useDarkTheme, mCurrentUserId);
-                mOverlayManager.setEnabled("com.android.dui.theme.dark",
-                        useDarkTheme, mCurrentUserId);
-                if (useDarkTheme) {
-                    unloadStockDarkTheme();
-                }
-            } catch (RemoteException e) {
-                Log.w(TAG, "Can't change theme", e);
-            }
+            ThemeAccentUtils.setLightDarkTheme(mOverlayManager, mCurrentUserId, useDarkTheme);
         }
         if (isUsingBlackTheme() != useBlackTheme) {
-            try {
-                mOverlayManager.setEnabled("com.android.system.theme.black",
-                        useBlackTheme, mCurrentUserId);
-                mOverlayManager.setEnabled("com.android.settings.theme.black",
-                        useBlackTheme, mCurrentUserId);
-                mOverlayManager.setEnabled("com.android.dui.theme.black",
-                        useBlackTheme, mCurrentUserId);
-            } catch (RemoteException e) {
-                Log.w(TAG, "Can't change theme", e);
-            }
+            ThemeAccentUtils.setLightBlackTheme(mOverlayManager, mCurrentUserId, useBlackTheme);
         }
 
         if (isUsingExtendedTheme() != useExtendedTheme) {
-            try {
-                mOverlayManager.setEnabled("com.android.system.theme.extended",
-                        useExtendedTheme, mCurrentUserId);
-                mOverlayManager.setEnabled("com.android.settings.theme.extended",
-                        useExtendedTheme, mCurrentUserId);
-                mOverlayManager.setEnabled("com.android.dui.theme.extended",
-                        useExtendedTheme, mCurrentUserId);
-            } catch (RemoteException e) {
-                Log.w(TAG, "Can't change theme", e);
-            }
+            ThemeAccentUtils.setLightExtendedTheme(mOverlayManager, mCurrentUserId, useExtendedTheme);
         }
 
         // Lock wallpaper defines the color of the majority of the views, hence we'll use it
@@ -5415,6 +5392,18 @@ public class StatusBar extends SystemUI implements DemoMode,
                 reinflateViews();
             }
         }, 1000);
+    }
+
+    // Switches theme accent from to another or back to stock
+    public void updateAccents() {
+        int accentSetting = Settings.System.getIntForUser(mContext.getContentResolver(),
+                Settings.System.ACCENT_PICKER, 0, mCurrentUserId);
+        ThemeAccentUtils.updateAccents(mOverlayManager, mCurrentUserId, accentSetting);
+    }
+
+    // Unload all the theme accents
+    public void unloadAccents() {
+        ThemeAccentUtils.unloadAccents(mOverlayManager, mCurrentUserId);
     }
 
     private void updateDozingState() {
@@ -6633,6 +6622,9 @@ public class StatusBar extends SystemUI implements DemoMode,
                     Settings.System.SYSTEM_THEME_STYLE),
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.ACCENT_PICKER),
+                    false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.FORCE_AMBIENT_FOR_MEDIA),
                     false, this, UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
@@ -6701,6 +6693,12 @@ public class StatusBar extends SystemUI implements DemoMode,
                     Settings.System.SYSTEM_THEME_STYLE)) || uri.equals(Settings.System.getUriFor(
                     Settings.System.SYSTEM_THEME_CURRENT_OVERLAY))) {
                 updateThemeAndReinflate();
+            } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.ACCENT_PICKER))) {
+                // Unload the accents and update the accent only when the user asks.
+                // Keeps us from overloading the system by performing these tasks every time.
+                unloadAccents();
+                updateAccents();
             } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.FORCE_AMBIENT_FOR_MEDIA))) {
                 setForceAmbient();
