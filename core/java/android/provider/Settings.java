@@ -1750,6 +1750,10 @@ public final class Settings {
             return true;
         }
 
+        public int getCurrentGeneration() {
+            return mCurrentGeneration;
+        }
+
         private int readCurrentGeneration() {
             try {
                 return mArray.get(mIndex);
@@ -1858,6 +1862,7 @@ public final class Settings {
 
         public String getStringForUser(ContentResolver cr, String name, final int userHandle) {
             final boolean isSelf = (userHandle == UserHandle.myUserId());
+            int currentGeneration = -1;
             if (isSelf) {
                 synchronized (NameValueCache.this) {
                     if (mGenerationTracker != null) {
@@ -1870,6 +1875,9 @@ public final class Settings {
                             mValues.clear();
                         } else if (mValues.containsKey(name)) {
                             return mValues.get(name);
+                        }
+                        if (mGenerationTracker != null) {
+                            currentGeneration = mGenerationTracker.getCurrentGeneration();
                         }
                     }
                 }
@@ -1961,7 +1969,10 @@ public final class Settings {
                                         });
                                     }
                                 }
-                                mValues.put(name, value);
+                                if (mGenerationTracker != null && currentGeneration ==
+                                        mGenerationTracker.getCurrentGeneration()) {
+                                    mValues.put(name, value);
+                                }
                             }
                         } else {
                             if (LOCAL_LOGV) Log.i(TAG, "call-query of user " + userHandle
@@ -2002,7 +2013,10 @@ public final class Settings {
 
                 String value = c.moveToNext() ? c.getString(0) : null;
                 synchronized (NameValueCache.this) {
-                    mValues.put(name, value);
+                    if(mGenerationTracker != null &&
+                            currentGeneration == mGenerationTracker.getCurrentGeneration()) {
+                        mValues.put(name, value);
+                    }
                 }
                 if (LOCAL_LOGV) {
                     Log.v(TAG, "cache miss [" + mUri.getLastPathSegment() + "]: " +
@@ -3983,6 +3997,13 @@ public final class Settings {
          */
 
         /**
+         * Whether to show Qs panel footer warnings like for active VPN
+         * @hide
+         */
+        public static final String QS_FOOTER_WARNINGS = "qs_footer_warnings";
+
+
+        /**
         * Whether to allow battery light
         * @hide
         */
@@ -4681,13 +4702,14 @@ public final class Settings {
          * Style of clock
          * 0 - Right Clock  (default)
          * 1 - Center Clock
+         * 2 - Left Clock
          * @hide
          */
         public static final String STATUSBAR_CLOCK_STYLE = "statusbar_clock_style";
 
         /** @hide */
         public static final Validator STATUSBAR_CLOCK_STYLE_VALIDATOR =
-                new InclusiveIntegerRangeValidator(0, 1);
+                new InclusiveIntegerRangeValidator(0, 2);
 
         /**
          * Whether to show seconds next to clock in status bar
@@ -4753,6 +4775,13 @@ public final class Settings {
          * @hide
          */
         public static final String STATUSBAR_CLOCK_DATE_POSITION = "statusbar_clock_date_position";
+
+
+        /**
+         * Configure the app to be used to edit screenshots with
+         * @hide
+         */
+        public static final String SCREENSHOT_EDIT_USER_APP = "screenshot_edit_user_app";
 
         /**
          * Whether to display cross sign for a data disabled connection
@@ -4843,6 +4872,33 @@ public final class Settings {
          * @hide
          */
         public static final String LISTVIEW_INTERPOLATOR = "listview_interpolator";
+
+        /**
+         * Whether to change the transparency of the qs panel
+         * @hide
+         */
+        public static final String QS_PANEL_BG_ALPHA = "qs_panel_bg_alpha";
+
+        /**
+         * Change quick settings tiles animation style
+         *
+         * @hide
+         */
+        public static final String ANIM_TILE_STYLE = "anim_tile_style";
+
+        /**
+         * Change quick settings tiles animation duration
+         *
+         * @hide
+         */
+        public static final String ANIM_TILE_DURATION = "anim_tile_duration";
+
+        /**
+         * Change quick settings tiles interpolator
+         *
+         * @hide
+         */
+        public static final String ANIM_TILE_INTERPOLATOR = "anim_tile_interpolator";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -5724,7 +5780,7 @@ public final class Settings {
             }
             return sNameValueCache.putStringForUser(resolver, name, value, tag,
                     makeDefault, userHandle);
-        }
+}
 
         /**
          * Store a name/value pair into the database.
@@ -8492,6 +8548,13 @@ public final class Settings {
          * @hide
          */
         public static final String FORCE_AUTHORIZE_SUBSTRATUM_PACKAGES = "force_authorize_substratum_packages";
+
+        /**
+         * Lockscreen Visualizer
+         *
+         * @hide
+         */
+        public static final String LOCKSCREEN_VISUALIZER_ENABLED = "lockscreen_visualizer";
 
         /**
          * This are the settings to be backed up.
@@ -11664,6 +11727,16 @@ public final class Settings {
                 "location_settings_link_to_permissions_enabled";
 
         /**
+         * @hide
+         */
+        public static final String USB_DEFAULT_CONFIGURATION = "usb_default_configuration";
+
+        /**
+         * @hide
+         */
+        public static final String USB_PARANOIA_CONNECT = "usb_paranoia_connect";
+
+        /**
          * Flag to enable use of RefactoredBackupManagerService.
          *
          * @hide
@@ -11698,6 +11771,12 @@ public final class Settings {
          * @hide
          */
         public static final String RINGTONE_FOCUS_MODE = "ringtone_focus_mode";
+
+        /**
+         * Default animation
+         * @hide
+         */
+        public static final String SYSTEM_DEFAULT_ANIMATION = "system_default_animation";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings
@@ -12709,3 +12788,4 @@ public final class Settings {
         return packages[0];
     }
 }
+

@@ -1415,28 +1415,30 @@ public class AudioService extends IAudioService.Stub
 
     private void adjustSuggestedStreamVolume(int direction, int suggestedStreamType, int flags,
             String callingPackage, String caller, int uid) {
-        if (DEBUG_VOL) Log.d(TAG, "adjustSuggestedStreamVolume() stream=" + suggestedStreamType
-                + ", flags=" + flags + ", caller=" + caller
-                + ", volControlStream=" + mVolumeControlStream
-                + ", userSelect=" + mUserSelectedVolumeControlStream);
         mVolumeLogger.log(new VolumeEvent(VolumeEvent.VOL_ADJUST_SUGG_VOL, suggestedStreamType,
                 direction/*val1*/, flags/*val2*/, new StringBuilder(callingPackage)
                         .append("/").append(caller).append(" uid:").append(uid).toString()));
         final int streamType;
-        if (mUserSelectedVolumeControlStream) { // implies mVolumeControlStream != -1
-            streamType = mVolumeControlStream;
-        } else {
-            final int maybeActiveStreamType = getActiveStreamType(suggestedStreamType);
-            final boolean activeForReal;
-            if (maybeActiveStreamType == AudioSystem.STREAM_MUSIC) {
-                activeForReal = isAfMusicActiveRecently(0);
-            } else {
-                activeForReal = AudioSystem.isStreamActive(maybeActiveStreamType, 0);
-            }
-            if (activeForReal || mVolumeControlStream == -1) {
-                streamType = maybeActiveStreamType;
-            } else {
+        synchronized (mForceControlStreamLock) {
+            if (DEBUG_VOL) Log.d(TAG, "adjustSuggestedStreamVolume() stream=" + suggestedStreamType
+                    + ", flags=" + flags + ", caller=" + caller
+                    + ", volControlStream=" + mVolumeControlStream
+                    + ", userSelect=" + mUserSelectedVolumeControlStream);
+            if (mUserSelectedVolumeControlStream) { // implies mVolumeControlStream != -1
                 streamType = mVolumeControlStream;
+            } else {
+                final int maybeActiveStreamType = getActiveStreamType(suggestedStreamType);
+                final boolean activeForReal;
+                if (maybeActiveStreamType == AudioSystem.STREAM_MUSIC) {
+                    activeForReal = isAfMusicActiveRecently(0);
+                } else {
+                    activeForReal = AudioSystem.isStreamActive(maybeActiveStreamType, 0);
+                }
+                if (activeForReal || mVolumeControlStream == -1) {
+                    streamType = maybeActiveStreamType;
+                } else {
+                    streamType = mVolumeControlStream;
+                }
             }
         }
 
@@ -1934,7 +1936,17 @@ public class AudioService extends IAudioService.Stub
                 }
                 mUserSelectedVolumeControlStream = false;
             } else {
-                mForceControlStreamClient = new ForceControlStreamClient(cb);
+                if (null == mForceControlStreamClient) {
+                    mForceControlStreamClient = new ForceControlStreamClient(cb);
+                } else {
+                    if (mForceControlStreamClient.getBinder() == cb) {
+                        Log.d(TAG, "forceVolumeControlStream cb:" + cb + " is already linked.");
+                    } else {
+                        mForceControlStreamClient.release();
+                        mForceControlStreamClient = null;
+                        mForceControlStreamClient = new ForceControlStreamClient(cb);
+                    }
+                }
             }
         }
     }
@@ -1973,6 +1985,10 @@ public class AudioService extends IAudioService.Stub
                 mCb.unlinkToDeath(this, 0);
                 mCb = null;
             }
+        }
+
+        public IBinder getBinder() {
+            return mCb;
         }
     }
 
@@ -3016,7 +3032,10 @@ public class AudioService extends IAudioService.Stub
 
         // Only enable calls from system components
         if (Binder.getCallingUid() >= FIRST_APPLICATION_UID) {
-            mForcedUseForCommExt = on ? AudioSystem.FORCE_BT_SCO : AudioSystem.FORCE_NONE;
+            if (on)
+                mForcedUseForCommExt = AudioSystem.FORCE_BT_SCO;
+            else if (mForcedUseForCommExt == AudioSystem.FORCE_BT_SCO)
+                mForcedUseForCommExt = AudioSystem.FORCE_NONE;
             return;
         }
 
@@ -3039,8 +3058,10 @@ public class AudioService extends IAudioService.Stub
                 }
             }
             mForcedUseForComm = AudioSystem.FORCE_BT_SCO;
+            AudioSystem.setParameters("BT_SCO=on");
         } else if (mForcedUseForComm == AudioSystem.FORCE_BT_SCO) {
             mForcedUseForComm = AudioSystem.FORCE_NONE;
+            AudioSystem.setParameters("BT_SCO=off");
         }
         mForcedUseForCommExt = mForcedUseForComm;
         AudioSystem.setParameters("BT_SCO="+ (on ? "on" : "off"));

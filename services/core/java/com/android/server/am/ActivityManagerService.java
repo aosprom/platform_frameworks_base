@@ -1705,6 +1705,8 @@ public class ActivityManagerService extends IActivityManager.Stub
     static ServiceThread sKillThread = null;
     static KillHandler sKillHandler = null;
 
+    static final int UPDATE_OOMADJ_MSG = 99999;
+
     CompatModeDialog mCompatModeDialog;
     UnsupportedDisplaySizeDialog mUnsupportedDisplaySizeDialog;
     long mLastMemUsageReportTime = 0;
@@ -2453,6 +2455,11 @@ public class ActivityManagerService extends IActivityManager.Stub
                             }
                         }
                     }
+                }
+            } break;
+            case UPDATE_OOMADJ_MSG: {
+                synchronized (ActivityManagerService.this) {
+                    updateOomAdjLocked();
                 }
             } break;
             }
@@ -4060,8 +4067,12 @@ public class ActivityManagerService extends IActivityManager.Stub
             // starting this process. (We already invoked this method once when
             // the package was initially frozen through KILL_APPLICATION_MSG, so
             // it doesn't hurt to use it again.)
-            forceStopPackageLocked(app.info.packageName, UserHandle.getAppId(app.uid), false,
-                    false, true, false, false, UserHandle.getUserId(app.userId), "start failure");
+            mHandler.post(() -> {
+                synchronized(ActivityManagerService.this) {
+                    forceStopPackageLocked(app.info.packageName, UserHandle.getAppId(app.uid), false,
+                        false, true, false, false, UserHandle.getUserId(app.userId), "start failure");
+                }
+            });
         }
     }
 
@@ -5523,7 +5534,8 @@ public class ActivityManagerService extends IActivityManager.Stub
             handleAppDiedLocked(app, false, true);
 
             if (doOomAdj) {
-                updateOomAdjLocked();
+                mHandler.removeMessages(UPDATE_OOMADJ_MSG);
+                mHandler.sendEmptyMessage(UPDATE_OOMADJ_MSG);
             }
             if (doLowMem) {
                 doLowMemReportIfNeededLocked(app);

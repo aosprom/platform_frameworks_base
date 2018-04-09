@@ -606,7 +606,7 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
     public ActivityStackSupervisor(ActivityManagerService service, Looper looper) {
         mService = service;
         mHandler = new ActivityStackSupervisorHandler(looper);
-        mActivityMetricsLogger = new ActivityMetricsLogger(this, mService.mContext);
+        mActivityMetricsLogger = new ActivityMetricsLogger(this, mService.mContext, looper);
         mKeyguardController = new KeyguardController(service, this);
     }
 
@@ -3256,12 +3256,16 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
                 continue;
             }
             // The display is awake now, so clean up the going to sleep list.
-            for (Iterator<ActivityRecord> it = mGoingToSleepActivities.iterator(); it.hasNext(); ) {
-                final ActivityRecord r = it.next();
+            ArrayList<ActivityRecord> toBeRemove = new ArrayList<ActivityRecord>();
+            for (int i = 0; i < mGoingToSleepActivities.size(); i++) {
+                final ActivityRecord r = mGoingToSleepActivities.get(i);
                 if (r.getDisplayId() == display.mDisplayId) {
-                    it.remove();
+                    toBeRemove.add(r);
                 }
             }
+
+            for (final ActivityRecord r: toBeRemove) mGoingToSleepActivities.remove(r);
+            toBeRemove= null;
         }
     }
 
@@ -4580,8 +4584,8 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
                                         & (~StatusBarManager.DISABLE_HOME)
                                         & (~StatusBarManager.DISABLE_RECENT);
                             }
-                            getStatusBarService().disable(flags, mToken,
-                                    mService.mContext.getPackageName());
+                            getStatusBarService().disableForUser(flags, mToken,
+                                    mService.mContext.getPackageName(), msg.arg1);
                             getStatusBarService().screenPinningStateChanged(true);
                         }
                         mWindowManager.disableKeyguard(mToken, LOCK_TASK_TAG);
@@ -4597,8 +4601,8 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
                     // When lock task ends, we enable the status bars.
                     try {
                         if (getStatusBarService() != null) {
-                            getStatusBarService().disable(StatusBarManager.DISABLE_NONE, mToken,
-                                    mService.mContext.getPackageName());
+                            getStatusBarService().disableForUser(StatusBarManager.DISABLE_NONE, mToken,
+                                    mService.mContext.getPackageName(), msg.arg1);
                             getStatusBarService().screenPinningStateChanged(false);
                         }
                         mWindowManager.reenableKeyguard(mToken);
@@ -4850,9 +4854,13 @@ public class ActivityStackSupervisor extends ConfigurationContainer implements D
                 mService.mActivityStarter.sendPowerHintForLaunchStartIfNeeded(true /* forceSend */,
                         targetActivity);
                 mActivityMetricsLogger.notifyActivityLaunching();
-                mService.moveTaskToFrontLocked(task.taskId, 0, bOptions, true /* fromRecents */);
-                mActivityMetricsLogger.notifyActivityLaunched(ActivityManager.START_TASK_TO_FRONT,
-                        targetActivity);
+                try {
+                    mService.moveTaskToFrontLocked(task.taskId, 0, bOptions,
+                            true /* fromRecents */);
+                } finally {
+                    mActivityMetricsLogger.notifyActivityLaunched(START_TASK_TO_FRONT,
+                            targetActivity);
+                }
 
                 // If we are launching the task in the docked stack, put it into resizing mode so
                 // the window renders full-screen with the background filling the void. Also only
